@@ -1,11 +1,19 @@
 plugins {
   id 'java'
   id 'application'
+  id 'pl.allegro.tech.build.axion-release' version '1.18.2'
 }
 
 group = 'com.github.duckasteroid'
-version = '0.0.1'
 description = 'An example project'
+
+scmVersion {
+  tag {
+    prefix.set("example-project")
+  }
+}
+
+project.version = scmVersion.version
 
 application {
   mainClass = 'com.github.duckasteroid.Main'
