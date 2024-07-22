@@ -1,17 +1,19 @@
 plugins {
-  
   id 'java'
-  
-  
-  id 'application
-  
+  id 'application'
 }
-group = 'com.asteroid.duck'
+
+group = 'com.github.duckasteroid'
 version = '0.0.1'
 description = 'An example project'
+
+application {
+  mainClass = 'com.github.duckasteroid.Main'
+}
 
 repositories {
   mavenCentral()
 }
+
 dependencies {
 }
