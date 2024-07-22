@@ -1,0 +1,17 @@
+plugins {
+  
+  id 'java'
+  
+  
+  id 'application
+  
+}
+group = 'com.asteroid.duck'
+version = '0.0.1'
+description = 'An example project'
+
+repositories {
+  mavenCentral()
+}
+dependencies {
+}
