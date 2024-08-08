@@ -1,19 +1,13 @@
 plugins {
   id 'java'
   id 'application'
-  id 'pl.allegro.tech.build.axion-release' version '1.18.2'
+  id 'maven-publish'
+  id "com.github.harbby.gradle.serviceloader" version "1.1.8"
 }
 
 group = 'com.github.duckasteroid'
 description = 'An example project'
-
-scmVersion {
-  tag {
-    prefix.set("example-project")
-  }
-}
-
-project.version = scmVersion.version
+version = "0.0.1"
 
 application {
   mainClass = 'com.github.duckasteroid.Main'
@@ -24,4 +18,69 @@ repositories {
 }
 
 dependencies {
+  // Other dependencies...
+
+  // JUnit Jupiter API and test implementation
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+
+  // JUnit Jupiter Engine
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }
+
+serviceLoader {
+  serviceInterface 'com.github.duckasteroid.Receiver'
+  serviceInterface 'com.github.duckasteroid.Emitter'
+}
+
+
+test {
+  useJUnitPlatform()
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      from components.java
+      pom {
+        name = project.name
+        //description = "Project ${getProject().path}"
+        url = "http://duckasteroid.github.io/${rootProject.name}/"
+        licenses {
+          license {
+            name = 'The Apache License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+        scm {
+          connection = "scm:git:git://github.com/duckAsteroid/${rootProject.name}.git"
+          developerConnection = "scm:git:ssh://github.com:duckAsteroid/${rootProject.name}.git"
+          url ="https://github.com/duckAsteroid/${rootProject.name}/tree/master"
+        }
+        developers {
+          developer {
+            id = 'duckAsteroid'
+            name = 'Chris Senior'
+            email ='christopher.senior@gmail.com'
+          }
+        }
+      }
+    }
+  }
+  // add GitHub packages repo
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = "https://maven.pkg.github.com/cognitranlimited/products-gradle-plugins"
+      credentials {
+        username = System.getenv("GITHUB_ACTOR")
+        password = System.getenv("GITHUB_TOKEN")
+      }
+    }
+    maven {
+      name = 'LocalTest'
+      // Change the URL to your desired local directory
+      url = uri("file://${projectDir}/build/repo")
+    }
+  }
+}
+
