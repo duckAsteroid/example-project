@@ -1,40 +1,67 @@
 plugins {
-  id 'java'
   id 'application'
-  id 'maven-publish'
-  id "com.github.harbby.gradle.serviceloader" version "1.1.8"
-}
+  id 'com.palantir.git-version' version '3.1.0'
+ }
 
 group = 'com.github.duckasteroid'
-description = 'An example project'
-version = "0.0.1"
+
+dependencies {
+  implementation project(':api')
+  runtimeOnly project(':emitter')
+  runtimeOnly project(':receiver')
+}
+
+def getOurVersion() {
+  def details = versionDetails()
+  def version = details.lastTag.substring(1) // get rid of leading 'v'
+  def suffix = "" // default no suffix
+  if (details.branchName != null && details.branchName.equals("develop")) {
+    // if we are on develop branch: auto increment last version segment
+    def lastSplit = version.lastIndexOf('.')
+    if (lastSplit > 0) {
+      def prefix = version.substring(0, lastSplit)
+      def lastElement = version.substring(lastSplit + 1)
+      if (lastElement.isInteger()) {
+        def num = lastElement as Integer
+        version = prefix + "." + (num++)
+      }
+    }
+  }
+  if (!details.isCleanTag) {
+    suffix = "-SNAPSHOT"
+  }
+  return version + suffix
+}
+
+version = getOurVersion()
+
+allprojects {
+  apply plugin: 'java'
+  apply plugin:  'maven-publish'
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    // Other dependencies...
+
+    // JUnit Jupiter API and test implementation
+    testImplementation libs.junit.api
+
+    // JUnit Jupiter Engine
+    testRuntimeOnly libs.junit.engine
+  }
+
+
+  test {
+    useJUnitPlatform()
+  }
+}
+
 
 application {
   mainClass = 'com.github.duckasteroid.Main'
-}
-
-repositories {
-  mavenCentral()
-}
-
-dependencies {
-  // Other dependencies...
-
-  // JUnit Jupiter API and test implementation
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-
-  // JUnit Jupiter Engine
-  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
-}
-
-serviceLoader {
-  serviceInterface 'com.github.duckasteroid.Receiver'
-  serviceInterface 'com.github.duckasteroid.Emitter'
-}
-
-
-test {
-  useJUnitPlatform()
 }
 
 publishing {
