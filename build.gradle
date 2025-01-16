@@ -14,14 +14,19 @@ application {
   mainClass = 'com.github.duckasteroid.Main'
 }
 
-def getOurVersion() {
-  def details = versionDetails()
+def getOurVersion(Project project) {
+  // path is preceded by ':'
+  def path = project.path.substring(1) + '/'
+
+  def details = project.rootProject == project ? versionDetails() : versionDetails(prefix: path)
   // get rid of leading 'v' (if there is one)
   def version = details.lastTag.startsWith('v') ? details.lastTag.substring(1) : details.lastTag
+  println project.path +"=" +path + " @ "+ version
   // if we are on develop branch: auto increment last version segment
   if (details.branchName == "develop" && !details.isCleanTag) {
     version = incrementLastVersionSegment(version) + "-SNAPSHOT"
   }
+  println project.path +"=" +path + " -> "+ version
   return version
 }
 
@@ -41,7 +46,7 @@ allprojects {
 
   group = 'com.github.duckasteroid'
 
-  version = getOurVersion()
+  version = getOurVersion(project)
 
   repositories {
     mavenCentral()
