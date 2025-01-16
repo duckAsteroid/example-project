@@ -19,13 +19,10 @@ def getOurVersion() {
   // get rid of leading 'v' (if there is one)
   def version = details.lastTag.startsWith('v') ? details.lastTag.substring(1) : details.lastTag
   // if we are on develop branch: auto increment last version segment
-  if (details.branchName == "develop") {
-    version = incrementLastVersionSegment(version)
+  if (details.branchName == "develop" && !details.isCleanTag) {
+    version = incrementLastVersionSegment(version) + "-SNAPSHOT"
   }
-  // suffix is influenced by how clean the repo is
-  def suffix = details.isCleanTag ? "" : "-SNAPSHOT"
-  def result = "${version}${suffix}"
-  return result
+  return version
 }
 
 private String incrementLastVersionSegment(String version) {
