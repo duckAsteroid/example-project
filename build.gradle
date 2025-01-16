@@ -3,41 +3,48 @@ plugins {
   id 'com.palantir.git-version' version '3.1.0'
  }
 
-group = 'com.github.duckasteroid'
-
 dependencies {
   implementation project(':api')
   runtimeOnly project(':emitter')
   runtimeOnly project(':receiver')
 }
 
+
+application {
+  mainClass = 'com.github.duckasteroid.Main'
+}
+
 def getOurVersion() {
   def details = versionDetails()
-  def version = details.lastTag.substring(1) // get rid of leading 'v'
-  def suffix = "" // default no suffix
-  if (details.branchName != null && details.branchName.equals("develop")) {
-    // if we are on develop branch: auto increment last version segment
-    def lastSplit = version.lastIndexOf('.')
-    if (lastSplit > 0) {
-      def prefix = version.substring(0, lastSplit)
-      def lastElement = version.substring(lastSplit + 1)
-      if (lastElement.isInteger()) {
-        def num = lastElement as Integer
-        version = prefix + "." + (num++)
-      }
-    }
+  // get rid of leading 'v' (if there is one)
+  def version = details.lastTag.startsWith('v') ? details.lastTag.substring(1) : details.lastTag
+  // if we are on develop branch: auto increment last version segment
+  if (details.branchName == "develop") {
+    version = incrementLastVersionSegment(version)
   }
-  if (!details.isCleanTag) {
-    suffix = "-SNAPSHOT"
-  }
+  // suffix is influenced by how clean the repo is
+  def suffix = details.isCleanTag ? "" : "-SNAPSHOT"
+  return "${version}${suffix}"
   return version + suffix
 }
 
-version = getOurVersion()
+private String incrementLastVersionSegment(String version) {
+  def parts = version.tokenize('.')
+  if (parts.last().isInteger()) {
+    parts[-1] = (parts.last() as Integer) + 1
+  }
+  return parts.join('.')
+}
 
+
+// ALL PROJECTS
 allprojects {
   apply plugin: 'java'
   apply plugin:  'maven-publish'
+
+  group = 'com.github.duckasteroid'
+
+  version = getOurVersion()
 
   repositories {
     mavenCentral()
@@ -57,57 +64,54 @@ allprojects {
   test {
     useJUnitPlatform()
   }
-}
-
-
-application {
-  mainClass = 'com.github.duckasteroid.Main'
-}
-
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      from components.java
-      pom {
-        name = project.name
-        //description = "Project ${getProject().path}"
-        url = "http://duckasteroid.github.io/${rootProject.name}/"
-        licenses {
-          license {
-            name = 'The Apache License, Version 2.0'
-            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+        pom {
+          name = project.name
+          //description = "Project ${getProject().path}"
+          url = "http://duckasteroid.github.io/${rootProject.name}/"
+          licenses {
+            license {
+              name = 'The Apache License, Version 2.0'
+              url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
           }
-        }
-        scm {
-          connection = "scm:git:git://github.com/duckAsteroid/${rootProject.name}.git"
-          developerConnection = "scm:git:ssh://github.com:duckAsteroid/${rootProject.name}.git"
-          url ="https://github.com/duckAsteroid/${rootProject.name}/tree/master"
-        }
-        developers {
-          developer {
-            id = 'duckAsteroid'
-            name = 'Chris Senior'
-            email ='christopher.senior@gmail.com'
+          scm {
+            connection = "scm:git:git://github.com/duckAsteroid/${rootProject.name}.git"
+            developerConnection = "scm:git:ssh://github.com:duckAsteroid/${rootProject.name}.git"
+            url ="https://github.com/duckAsteroid/${rootProject.name}/tree/master"
+          }
+          developers {
+            developer {
+              id = 'duckAsteroid'
+              name = 'Chris Senior'
+              email ='christopher.senior@gmail.com'
+            }
           }
         }
       }
     }
-  }
-  // add GitHub packages repo
-  repositories {
-    maven {
-      name = "GitHubPackages"
-      url = "https://maven.pkg.github.com/cognitranlimited/products-gradle-plugins"
-      credentials {
-        username = System.getenv("GITHUB_ACTOR")
-        password = System.getenv("GITHUB_TOKEN")
+    // add GitHub packages repo
+    repositories {
+      maven {
+        name = "GitHubPackages"
+        url = "https://maven.pkg.github.com/cognitranlimited/products-gradle-plugins"
+        credentials {
+          username = System.getenv("GITHUB_ACTOR")
+          password = System.getenv("GITHUB_TOKEN")
+        }
       }
-    }
-    maven {
-      name = 'LocalTest'
-      // Change the URL to your desired local directory
-      url = uri("file://${projectDir}/build/repo")
+      maven {
+        name = 'LocalTest'
+        // Change the URL to your desired local directory
+        url = uri("file://${rootProject.buildDir}/repo")
+      }
     }
   }
 }
+
+
+
 
