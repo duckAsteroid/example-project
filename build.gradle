@@ -14,8 +14,9 @@ application {
   mainClass = 'com.github.duckasteroid.Main'
 }
 
-def getOurVersion() {
-  def details = versionDetails()
+def getOurVersion(Project project) {
+  def prefix = project.path.substring(1)
+  def details = prefix.length() > 0 ? versionDetails(prefix: "/${prefix}/") : versionDetails()
   // get rid of leading 'v' (if there is one)
   def version = details.lastTag.startsWith('v') ? details.lastTag.substring(1) : details.lastTag
   // if we are on develop branch: auto increment last version segment
@@ -24,8 +25,9 @@ def getOurVersion() {
   }
   // suffix is influenced by how clean the repo is
   def suffix = details.isCleanTag ? "" : "-SNAPSHOT"
-  return "${version}${suffix}"
-  return version + suffix
+  def result = "${version}${suffix}"
+  println project.path + "="+ result
+  return result
 }
 
 private String incrementLastVersionSegment(String version) {
@@ -44,7 +46,7 @@ allprojects {
 
   group = 'com.github.duckasteroid'
 
-  version = getOurVersion()
+  version = getOurVersion(project)
 
   repositories {
     mavenCentral()
