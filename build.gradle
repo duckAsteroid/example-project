@@ -32,9 +32,8 @@ allprojects {
 
   version = gitVersion(project)
 
-  tasks.register('printVersion', PrintVersionTask) {
+  tasks.register('printVersion', PrintVersionSourcesTask) {
     group = 'versioning'
-    version = project.version
   }
 
   repositories {

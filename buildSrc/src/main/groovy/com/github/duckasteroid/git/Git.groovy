@@ -57,15 +57,27 @@ static ProcessResult withGit(List<String> args) {
 }
 
 interface VersionSource {
-    Optional<String> version();
+    boolean hasVersion()
+    String version();
 }
 /**
  * Represents a git commit as a version source (not preferred)
  */
+@Immutable
 class Commit implements VersionSource {
     String commitId
-    Optional<String> version() {
-        return Optional.ofNullable(commitId)
+
+    @Override
+    boolean hasVersion() {
+        return true
+    }
+
+    String version() {
+        return commitId
+    }
+
+    String toString() {
+        return "Commit: "+commitId
     }
 }
 /**
@@ -73,6 +85,7 @@ class Commit implements VersionSource {
  */
 @Immutable
 class GitTag implements VersionSource {
+    // Regular expression to match "vX.Y.Z" at the end of the string
     private static final Pattern PATTERN = Pattern.compile('v(\\d+\\.\\d+\\.\\d+)$')
 
     String tag;
@@ -81,19 +94,19 @@ class GitTag implements VersionSource {
     String shortCommit;
     String longCommit;
 
-    Optional<String> version() {
-        // Regular expression to match "vX.Y.Z" at the end of the string
+    boolean hasVersion() {
         Matcher matcher = PATTERN.matcher(tag)
+        return matcher.find()
+    }
 
-        if (matcher.find()) {
-            return Optional.of(matcher.group(1)) // Extract the version number
-        } else {
-            return Optional.empty()
-        }
+    String version() {
+        Matcher matcher = PATTERN.matcher(tag)
+        matcher.find()
+        return matcher.group(1); // Extract the version number
     }
 
     Optional<String[]> versionSegments() {
-        version().map {it.split('.') }
+        Optional.ofNullable(version()).map {it.split('.') }
     }
 
     final static char SEPARATOR = '\u0001';
@@ -110,6 +123,10 @@ class GitTag implements VersionSource {
 
     static String formatString() {
         return "%(refname:short)${SEPARATOR}%(committerdate:format:%Y-%m-%d@%H:%M:%S~%z)${SEPARATOR}%(subject)${SEPARATOR}%(objectname:short)${SEPARATOR}%(objectname)";
+    }
+
+    String toString() {
+        return "Tag ["+tag+"]:"+version()
     }
 }
 
@@ -194,19 +211,10 @@ static String gitBranch() {
     return withGit(["rev-parse", "--abbrev-ref", "HEAD"]).output[0].trim()
 }
 
-
-class PrintVersionTask extends DefaultTask {
-    @Input
-    String version;
-
-    @TaskAction
-    def printVersion() {
-        println version
-    }
-}
-
 static def gitVersion(Project project) {
-    return taggedVersion(project)
+    def candidates = taggedVersions(project)
+    def versionSource = candidates.find { it.hasVersion() }
+    return versionSource.version()
 }
 /**
  * Retrieve the git version for a project.
@@ -219,31 +227,22 @@ static def gitVersion(Project project) {
  * @param project
  * @return
  */
-static def taggedVersion(Project project) {
+static def taggedVersions(Project project) {
     // the fallback if we can't find something more specific...
-    def version = gitCommitID(true)
+    VersionSource version = new Commit(gitCommitID(true))
 
     // path is preceded by ':'
     def path = project.path.substring(1).trim()
-    def tags = gitTags("v*")
+    List<VersionSource> tags = gitTags("v*")
     if (!path.isBlank()) {
         path += '/'
         // lets try to find some project tags
-        tags = gitTags(path) + tags
+        tags = gitTags(path) + tags as List<VersionSource>
     }
 
-    if (!tags.isEmpty()) {
-        def versions = tags
-                .collect { it.version() }
-                .findAll { it.isPresent() }
-                .collect { it.get() }
+    tags += version
 
-        if (!versions.isEmpty()) {
-            version = versions[0]
-        }
-    }
-    println project.name +" current "+version
-    return version
+    return tags
 }
 
 private String incrementLastVersionSegment(String version) {
@@ -252,4 +251,14 @@ private String incrementLastVersionSegment(String version) {
         parts[-1] = (parts.last() as Integer) + 1
     }
     return parts.join('.')
+}
+
+
+class PrintVersionSourcesTask extends DefaultTask {
+    @TaskAction
+    def printVersion() {
+        println project.path +"@"+project.version
+        def versions = Git.taggedVersions(project)
+        versions.each { println it.toString() }
+    }
 }
