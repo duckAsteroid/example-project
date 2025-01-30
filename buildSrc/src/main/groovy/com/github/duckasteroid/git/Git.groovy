@@ -206,6 +206,7 @@ class PrintVersionTask extends DefaultTask {
 }
 
 static def gitVersion(Project project) {
+    return taggedVersion(project)
 }
 /**
  * Retrieve the git version for a project.
