@@ -1,6 +1,8 @@
+import static com.github.duckasteroid.git.Git.*
+import com.github.duckasteroid.git.*
+
 plugins {
   id 'application'
-  id 'com.palantir.git-version' version '3.1.0'
  }
 
 dependencies {
@@ -9,33 +11,15 @@ dependencies {
   runtimeOnly project(':receiver')
 }
 
-
 application {
   mainClass = 'com.github.duckasteroid.Main'
 }
 
-def getOurVersion(Project project) {
-  // path is preceded by ':'
-  def path = project.path.substring(1) + '/'
 
-  def details = project.rootProject == project ? versionDetails() : versionDetails(prefix: path)
-  // get rid of leading 'v' (if there is one)
-  def version = details.lastTag.startsWith('v') ? details.lastTag.substring(1) : details.lastTag
-  println project.path +"=" +path + " @ "+ version
-  // if we are on develop branch: auto increment last version segment
-  if (details.branchName == "develop" && !details.isCleanTag) {
-    version = incrementLastVersionSegment(version) + "-SNAPSHOT"
+task testGitCommand {
+  doLast {
+    println gitCommitID(false)
   }
-  println project.path +"=" +path + " -> "+ version
-  return version
-}
-
-private String incrementLastVersionSegment(String version) {
-  def parts = version.tokenize('.')
-  if (parts.last().isInteger()) {
-    parts[-1] = (parts.last() as Integer) + 1
-  }
-  return parts.join('.')
 }
 
 
@@ -46,7 +30,12 @@ allprojects {
 
   group = 'com.github.duckasteroid'
 
-  version = getOurVersion(project)
+  version = gitVersion(project)
+
+  tasks.register('printVersion', PrintVersionTask) {
+    group = 'versioning'
+    version = project.version
+  }
 
   repositories {
     mavenCentral()
@@ -73,11 +62,11 @@ allprojects {
         pom {
           name = project.name
           //description = "Project ${getProject().path}"
-          url = "http://duckasteroid.github.io/${rootProject.name}/"
+          url = "https://duckasteroid.github.io/${rootProject.name}/"
           licenses {
             license {
               name = 'The Apache License, Version 2.0'
-              url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
             }
           }
           scm {
@@ -108,7 +97,7 @@ allprojects {
       maven {
         name = 'LocalTest'
         // Change the URL to your desired local directory
-        url = uri("file://${rootProject.buildDir}/repo")
+        url = uri("${rootProject.buildDir}/repo")
       }
     }
   }
