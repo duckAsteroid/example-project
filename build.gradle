@@ -1,9 +1,8 @@
-import static com.github.duckasteroid.git.Git.*
-import com.github.duckasteroid.git.*
 
 plugins {
   id 'application'
- }
+  id 'pl.allegro.tech.build.axion-release' version '1.18.18' apply false
+}
 
 dependencies {
   implementation project(':api')
@@ -15,26 +14,25 @@ application {
   mainClass = 'com.github.duckasteroid.Main'
 }
 
-
-task testGitCommand {
-  doLast {
-    println gitCommitID(false)
-  }
-}
-
-
 // ALL PROJECTS
 allprojects {
   apply plugin: 'java'
-  apply plugin:  'maven-publish'
+  apply plugin: 'maven-publish'
+  apply plugin: 'pl.allegro.tech.build.axion-release'
 
   group = 'com.github.duckasteroid'
 
-  version = gitVersion(project)
-
-  tasks.register('printVersion', PrintVersionSourcesTask) {
-    group = 'versioning'
+  scmVersion {
+    tag {
+      def customPrefix = "${project.path.replace(':','/')}/v"
+      while (customPrefix.startsWith("/")) {
+        customPrefix = customPrefix.substring(1)
+      }
+      prefix.set(customPrefix)
+    }
   }
+
+  version = scmVersion.version
 
   repositories {
     mavenCentral()
@@ -54,6 +52,8 @@ allprojects {
   test {
     useJUnitPlatform()
   }
+
+
   publishing {
     publications {
       mavenJava(MavenPublication) {
