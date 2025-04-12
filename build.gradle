@@ -24,11 +24,17 @@ allprojects {
 
   scmVersion {
     tag {
+      // define a custom prefix for this project based on Gradle path
       def customPrefix = "${project.path.replace(':','/')}/v"
       while (customPrefix.startsWith("/")) {
         customPrefix = customPrefix.substring(1)
       }
+      // Expect this prefix for this project
       prefix.set(customPrefix)
+      // Fallback onto root project versions
+      //fallbackPrefixes.set(['v'])
+      // Absolute default is 0.0.0
+      initialVersion({config, position -> "0.0.0+notag"})
     }
   }
 
