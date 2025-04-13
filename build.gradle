@@ -23,6 +23,10 @@ allprojects {
   group = 'com.github.duckasteroid'
 
   scmVersion {
+    // Don't add branch name to versions
+    versionCreator({version, position ->
+      return version
+    })
     tag {
       // define a custom prefix for this project based on Gradle path
       def customPrefix = "${project.path.replace(':','/')}/v"
@@ -32,8 +36,8 @@ allprojects {
       // Expect this prefix for this project
       prefix.set(customPrefix)
       // Fallback onto root project versions
-      //fallbackPrefixes.set(['v'])
-      // Absolute default is 0.0.0
+      fallbackPrefixes.set(['v'])
+      // Absolute default
       initialVersion({config, position -> "0.0.0+notag"})
     }
   }
