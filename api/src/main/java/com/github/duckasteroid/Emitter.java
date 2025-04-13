@@ -1,7 +1,8 @@
 package com.github.duckasteroid;
 
 /**
- * An example service that creates (emits) messages
+ * An example service that creates (emits) messages.
+ * A change since v0.1.1
  */
 public interface Emitter {
 	/**
