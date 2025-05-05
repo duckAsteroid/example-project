@@ -1,7 +1,6 @@
-
 plugins {
   id 'application'
-  id 'pl.allegro.tech.build.axion-release' version '1.18.18' apply false
+  id 'duckasteroid-java' version '0.0.1-RC2'
 }
 
 dependencies {
@@ -16,33 +15,8 @@ application {
 
 // ALL PROJECTS
 allprojects {
-  apply plugin: 'java'
-  apply plugin: 'maven-publish'
-  apply plugin: 'pl.allegro.tech.build.axion-release'
+  apply plugin: 'duckasteroid-java'
 
-  group = 'com.github.duckasteroid'
-
-  scmVersion {
-    // Don't add branch name to versions
-    versionCreator({version, position ->
-      return version
-    })
-    tag {
-      // define a custom prefix for this project based on Gradle path
-      def customPrefix = "${project.path.replace(':','/')}/v"
-      while (customPrefix.startsWith("/")) {
-        customPrefix = customPrefix.substring(1)
-      }
-      // Expect this prefix for this project
-      prefix.set(customPrefix)
-      // Fallback onto root project versions
-      fallbackPrefixes.set(['v'])
-      // Absolute default
-      initialVersion({config, position -> "0.0.0+notag"})
-    }
-  }
-
-  version = scmVersion.version
 
   repositories {
     mavenCentral()
@@ -65,34 +39,6 @@ allprojects {
 
 
   publishing {
-    publications {
-      mavenJava(MavenPublication) {
-        from components.java
-        pom {
-          name = project.name
-          //description = "Project ${getProject().path}"
-          url = "https://duckasteroid.github.io/${rootProject.name}/"
-          licenses {
-            license {
-              name = 'The Apache License, Version 2.0'
-              url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-            }
-          }
-          scm {
-            connection = "scm:git:git://github.com/duckAsteroid/${rootProject.name}.git"
-            developerConnection = "scm:git:ssh://github.com:duckAsteroid/${rootProject.name}.git"
-            url ="https://github.com/duckAsteroid/${rootProject.name}/tree/master"
-          }
-          developers {
-            developer {
-              id = 'duckAsteroid'
-              name = 'Chris Senior'
-              email ='christopher.senior@gmail.com'
-            }
-          }
-        }
-      }
-    }
     // add GitHub packages repo
     repositories {
       maven {

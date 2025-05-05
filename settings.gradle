@@ -1,3 +1,10 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal() // It's good practice to keep this as well
+        mavenCentral()      // Or any other repositories your plugins might depend on
+    }
+}
 rootProject.name = 'example-project'
 include 'api'
 include 'emitter'
